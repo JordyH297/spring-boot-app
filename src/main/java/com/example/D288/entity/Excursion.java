@@ -44,10 +44,11 @@ public class Excursion {
     @JoinColumn(name="Vacation_ID", nullable = false)
     private Vacation vacation;
 
-    @ManyToMany(cascade = CascadeType.ALL)
-    @JoinTable(name="excursion_cartitem", joinColumns=@JoinColumn(name="Excursion_ID"),
-            inverseJoinColumns=@JoinColumn(name="Cart_Item_ID"))
+    @ManyToMany
+    @JoinTable(name="excursion_cartitem",
+            joinColumns=@JoinColumn(name="excursion_id"),
+            inverseJoinColumns=@JoinColumn(name="cart_item_id"))
+    private Set<CartItem> cartItems = new HashSet<>();
 
-    Set<CartItem> cartItems = new HashSet<>();
 
 }

@@ -5,6 +5,7 @@ import com.example.D288.entity.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -29,51 +30,57 @@ public class CheckoutImpl implements Checkout {
     @Override
     @Transactional
     public PurchaseResponse placeOrder(Purchase purchase) {
-        Cart cart = purchase.getCart();
+        // Generate tracking number
         String orderTrackingNumber = generateOrderTrackingNumber();
-        cart.setOrderTrackingNumber(orderTrackingNumber);
+        purchase.getCart().setOrderTrackingNumber(orderTrackingNumber);
 
-        Set<CartItem> cartItems = purchase.getCartItems();
+        // Fetch the vacation
+        Vacation vacation = purchase.getCartItems()
+                .stream()
+                .findFirst()
+                .map(CartItem::getVacation)
+                .orElseThrow(() -> new IllegalArgumentException("Vacation cannot be null."));
 
-        Vacation vacation = cartItems.stream().findFirst().map(CartItem::getVacation).orElse(null);
+        // Save the vacation first to ensure it has an ID
+        vacationRepository.save(vacation);
 
-        if (vacation == null) {
-            throw new IllegalArgumentException("Vacation cannot be null.");
-        }
+        // Save the cart next
+        Cart savedCart = cartRepository.save(purchase.getCart());
 
-        for (CartItem cartItem : cartItems) {
-            cart.add(cartItem);
-
-            Set<Excursion> excursions = vacation.getExcursions();
-
-            if (excursions != null) {
-                for (Excursion excursion : excursions) {
-                    if (excursion.getVacation() == null || excursion.getVacation().getId() == null) {
+        // Associate excursions with the vacation
+        Optional.ofNullable(vacation.getExcursions())
+                .ifPresent(excursions -> excursions.forEach(excursion -> {
+                    if (excursion.getVacation() == null) {
                         excursion.setVacation(vacation);
-                        if (vacation.getId() == null) {
-                            vacation = vacationRepository.save(vacation);
-                        }
                     }
+                    // Save each excursion
                     excursionRepository.save(excursion);
-                }
+                }));
+        // Save the cart items
+        purchase.getCartItems().forEach(cartItem -> {
+            cartItem.setCart(savedCart);
+            cartItemRepository.save(cartItem);
+        });
 
+        purchase.getCartItems().forEach(cartItem -> {
+            Set<Excursion> excursionsForCartItem = cartItem.getExcursions();
+            if (excursionsForCartItem != null) {
+                excursionsForCartItem.forEach(excursion -> {
+                    Excursion persistedExcursion = excursionRepository.findById(excursion.getId()).orElse(null);
+                    if (persistedExcursion != null) {
+                        persistedExcursion.getCartItems().add(cartItem);
+                        excursionRepository.save(persistedExcursion);
+                    }
+                });
             }
-            vacationRepository.save(vacation);
-        }
+        });
 
-
-        cart.setStatus(StatusType.ordered);
+        // Save the customer last as it's the top-level entity
         Customer customer = purchase.getCustomer();
-        customer.add(cart);
-
-        cartRepository.save(cart);
         customerRepository.save(customer);
 
         return new PurchaseResponse(orderTrackingNumber);
     }
-
-
-
 
     private String generateOrderTrackingNumber() {
         return UUID.randomUUID().toString();

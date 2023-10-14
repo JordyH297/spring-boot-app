@@ -24,7 +24,7 @@ public class CartItem {
     @JoinColumn(name = "Vacation_ID")
     private Vacation vacation;
 
-    @ManyToMany(cascade = CascadeType.ALL, mappedBy = "cartItems")
+    @ManyToMany(mappedBy = "cartItems")
     private Set<Excursion> excursions = new HashSet<>();
 
     @ManyToOne
@@ -38,5 +38,11 @@ public class CartItem {
     @Column(name = "Last_Update")
     @UpdateTimestamp
     private Date last_update;
+
+    public void addExcursion(Excursion excursion) {
+        this.excursions.add(excursion);
+        excursion.getCartItems().add(this);
+    }
+
 
 }
