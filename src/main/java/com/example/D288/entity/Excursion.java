@@ -44,9 +44,10 @@ public class Excursion {
     @JoinColumn(name="Vacation_ID", nullable = false)
     private Vacation vacation;
 
-    @ManyToMany
-    @JoinTable(name="excursion_cartitem", joinColumns=@JoinColumn(name="Cart_Item_ID"),
-            inverseJoinColumns=@JoinColumn(name="Excursion_ID"))
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name="excursion_cartitem", joinColumns=@JoinColumn(name="Excursion_ID"),
+            inverseJoinColumns=@JoinColumn(name="Cart_Item_ID"))
+
     Set<CartItem> cartItems = new HashSet<>();
 
 }

@@ -21,10 +21,10 @@ public class CartItem {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "Vacation_ID", nullable = false)
+    @JoinColumn(name = "Vacation_ID")
     private Vacation vacation;
 
-    @ManyToMany( mappedBy = "cartItems")
+    @ManyToMany(cascade = CascadeType.ALL, mappedBy = "cartItems")
     private Set<Excursion> excursions = new HashSet<>();
 
     @ManyToOne
@@ -38,4 +38,5 @@ public class CartItem {
     @Column(name = "Last_Update")
     @UpdateTimestamp
     private Date last_update;
+
 }

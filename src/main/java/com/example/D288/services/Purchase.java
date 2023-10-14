@@ -4,6 +4,7 @@ import com.example.D288.entity.Cart;
 import com.example.D288.entity.CartItem;
 import com.example.D288.entity.Customer;
 
+import com.example.D288.entity.Vacation;
 import lombok.Data;
 
 import java.util.Set;

@@ -40,6 +40,6 @@ public class Vacation {
     @UpdateTimestamp
     private Date last_update;
 
-    @OneToMany(cascade=CascadeType.ALL, mappedBy = "vacation")
+    @OneToMany(mappedBy = "vacation", cascade = CascadeType.ALL)
     private Set<Excursion> excursions;
 }
