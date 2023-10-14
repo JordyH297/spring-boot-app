@@ -34,6 +34,8 @@ public class CheckoutImpl implements Checkout {
         String orderTrackingNumber = generateOrderTrackingNumber();
         purchase.getCart().setOrderTrackingNumber(orderTrackingNumber);
 
+        purchase.getCart().setStatus(StatusType.ordered);
+
         // Fetch the vacation
         Vacation vacation = purchase.getCartItems()
                 .stream()
@@ -41,13 +43,10 @@ public class CheckoutImpl implements Checkout {
                 .map(CartItem::getVacation)
                 .orElseThrow(() -> new IllegalArgumentException("Vacation cannot be null."));
 
-        // Save the vacation first to ensure it has an ID
         vacationRepository.save(vacation);
 
-        // Save the cart next
         Cart savedCart = cartRepository.save(purchase.getCart());
 
-        // Associate excursions with the vacation
         Optional.ofNullable(vacation.getExcursions())
                 .ifPresent(excursions -> excursions.forEach(excursion -> {
                     if (excursion.getVacation() == null) {
@@ -59,6 +58,7 @@ public class CheckoutImpl implements Checkout {
         // Save the cart items
         purchase.getCartItems().forEach(cartItem -> {
             cartItem.setCart(savedCart);
+
             cartItemRepository.save(cartItem);
         });
 
